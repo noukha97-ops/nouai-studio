@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@paypal/react-paypal-js": "^9.2.0",
+    "@supabase/supabase-js": "^2.105.4"
+  }
+}

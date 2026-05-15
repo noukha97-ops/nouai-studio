@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Khaws koj cov style ntxiv yog tias muaj */
+body {
+  background: #0a0514;
+  color: white;
+}

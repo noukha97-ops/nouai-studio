@@ -1,0 +1,14 @@
+{
+  "app/page.tsx -> @gradio/client": {
+    "id": "app/page.tsx -> @gradio/client",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_gradio_client_dist_browser_js.js"
+    ]
+  },
+  "node_modules/@gradio/client/dist/browser.js -> ./__vite-browser-external-DYxpcVy9.js": {
+    "id": "node_modules/@gradio/client/dist/browser.js -> ./__vite-browser-external-DYxpcVy9.js",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_gradio_client_dist___vite-browser-external-DYxpcVy9_js.js"
+    ]
+  }
+}
