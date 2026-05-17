@@ -1,29 +1,32 @@
-import './globals.css'
-import { Inter } from 'next/font/google'
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: 'NouAI Studio',
-  description: 'Hmong AI Voice Generation',
-}
+// ─── LUB TSAV METADATA (KHO CHAW NO) ──────────────────────────────────
+export const metadata: Metadata = {
+  title: "Hmong Voice - Neural Studio",
+  description: "Powered by Nou AI",
+  // 👉 Nov yog cov kab code uas yuav coj koj lub logo mus display saum Tab Browser
+  icons: {
+    icon: "/logo.png",       // Nyeem ncaj qha rau hauv frontend/public/logo.png
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
+};
 
-// ✅ Ntxiv ntu Viewport no rau hauv koj lub Layout
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-}
-
+// ─── LUB ROOT LAYOUT COMPONENT ───────────────────────────────────────
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+      </body>
     </html>
-  )
+  );
 }
