@@ -1,6 +1,6 @@
 {
   "/page": "app/page.js",
+  "/api/webhook/route": "app/api/webhook/route.js",
   "/login/page": "app/login/page.js",
-  "/payment/page": "app/payment/page.js",
-  "/api/webhook/route": "app/api/webhook/route.js"
+  "/payment/page": "app/payment/page.js"
 }

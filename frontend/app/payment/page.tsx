@@ -18,11 +18,11 @@ export default function PaymentPage() {
     return () => unsubscribe();
   }, []);
 
+  // ✅ KHO TSHIAB FLAWLESS: Ntsaws 3 lub Checkout Links ntev uas koj nyas muab tuaj
   const packages = [
     {
       id: 1,
-      variantId: "1657526",
-      checkoutUrl: "https://nouai.lemonsqueezy.com/checkout/buy/779b529b-a814-4d4e-8584-3bb1bcfb6763?media=0&logo=0&desc=0&discount=0&enabled=1657526z", 
+      checkoutUrl: "https://nouai.lemonsqueezy.com/checkout/buy/779b529b-a814-4d4e-8584-3bb1bcfb6763?media=0&logo=0&desc=0&discount=0", 
       name: "Starter Pack",
       credits: 100,
       price: "$9.99",
@@ -30,8 +30,7 @@ export default function PaymentPage() {
     },
     {
       id: 2,
-      variantId: "1659730",
-      checkoutUrl: "https://nouai.lemonsqueezy.com/checkout/buy/5a586bd3-d706-4451-a984-c071aa8ffb64?media=0&logo=0&desc=0&discount=0&enabled=1659730", 
+      checkoutUrl: "https://nouai.lemonsqueezy.com/checkout/buy/4c6d5178-35c2-4008-a2f9-135a04729a3f?media=0&logo=0&desc=0&discount=0", 
       name: "Pro Pack",
       credits: 500,
       price: "$39.99",
@@ -39,9 +38,8 @@ export default function PaymentPage() {
     },
     {
       id: 3,
-      variantId: "1659734",
-      checkoutUrl: "https://nouai.lemonsqueezy.com/checkout/buy/f5a9c393-e90f-4676-abbc-08dff9a85302?media=0&logo=0&desc=0&discount=0&enabled=1659734", 
-      name: "Studio Max",
+      checkoutUrl: "https://nouai.lemonsqueezy.com/checkout/buy/7f3504c7-9720-42ab-aa7e-c9628138d1bb?media=0&logo=0&desc=0&discount=0", 
+      name: "Studio Pack",
       credits: 1500,
       price: "$99.99",
       color: "from-amber-500 to-orange-600"
@@ -49,7 +47,11 @@ export default function PaymentPage() {
   ];
 
   const handleBuy = (url: string) => {
-    if (!user) { router.push('/login'); return; }
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    // Txuas user email rau tom qab kom xis mas
     window.location.href = `${url}&checkout[email]=${user.email}`;
   };
 
@@ -100,7 +102,12 @@ export default function PaymentPage() {
                         <li>High Speed API</li>
                         <li>Txhua lub suab</li>
                       </ul>
-                      <button onClick={() => handleBuy(pkg.checkoutUrl)} className="mt-auto w-full py-4 rounded-2xl font-black uppercase text-[9px] tracking-[0.2em] bg-white text-black hover:bg-indigo-500 hover:text-white transition-all shadow-xl active:scale-95 shadow-white/5">Buy Now</button>
+                      <button 
+                        onClick={() => handleBuy(pkg.checkoutUrl)} 
+                        className="mt-auto w-full py-4 rounded-2xl font-black uppercase text-[9px] tracking-[0.2em] bg-white text-black hover:bg-indigo-500 hover:text-white transition-all shadow-xl active:scale-95 shadow-white/5"
+                      >
+                        Buy Now
+                      </button>
                     </div>
                   </div>
                 </div>

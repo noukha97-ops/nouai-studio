@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const digest = hmac.update(rawBody).digest('hex');
 
     if (signature !== digest) {
-      console.error("❌ Invalid Signature!");
+      console.error("❌ Invalid Signature detected!");
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -38,24 +38,28 @@ export async function POST(req: Request) {
     const email = payload.data.attributes.user_email;
 
     if (eventName === 'order_created') {
-      // ✅ KHO TSHIAB: Tshuaj xyuas variant_id kom zoo kom txhob Crash
       const attributes = payload.data.attributes;
-      const variantId = attributes.variant_id ? attributes.variant_id.toString() : "";
+      
+      // ✅ KHO TSHIAB LUB LOGIC KAWG: Nqa tus Nqi Nyiaj (Total) uas yog Cents los check hloov
+      // 999 Cents = $9.99 | 3999 Cents = $39.99 | 9999 Cents = $99.99
+      const totalCents = attributes.total ? parseInt(attributes.total.toString()) : 0;
       const variantName = attributes.variant_name || "Unknown";
+      const variantId = attributes.variant_id ? attributes.variant_id.toString() : "EMPTY";
       
       let amountToAdd = 100; // Default
 
-      // Check raws li IDs uas koj muaj
-      if (variantId === "1659730") {
-        amountToAdd = 500;
-      } else if (variantId === "1659734") {
-        amountToAdd = 1500;
-      } else if (variantId === "1657526") {
-        amountToAdd = 100;
+      // 🎯 Tshuaj xyuas raws li cov nqi nyiaj (Total Cents) uas txawv nkaus ntawm 3 lub packages
+      if (totalCents === 3999) {
+        amountToAdd = 500;   // Pob Pro Pack ($39.99)
+      } else if (totalCents === 9999) {
+        amountToAdd = 1500;  // Pob Studio Pack ($99.99)
+      } else if (totalCents === 999) {
+        amountToAdd = 100;   // Pob Starter Pack ($9.99)
       }
 
-      console.log(`🔔 Webhook Received: ${eventName} | User: ${email}`);
-      console.log(`📦 Variant: ${variantName} (ID: ${variantId}) | Adding: ${amountToAdd} CR`);
+      console.log(`🔔 Webhook Processed | User: ${email}`);
+      console.log(`📦 Order Total: ${totalCents} Cents | Variant Name: ${variantName} (ID: ${variantId})`);
+      console.log(`🚀 Calculating Credits: Adding ${amountToAdd} CR to database`);
 
       const usersRef = db.collection('users');
       const snapshot = await usersRef.where('email', '==', email).get();
@@ -69,19 +73,19 @@ export async function POST(req: Request) {
       snapshot.forEach(doc => {
         batch.update(doc.ref, {
           credits: admin.firestore.FieldValue.increment(amountToAdd),
-          last_variant_id: variantId,
-          updated_at: admin.firestore.FieldValue.serverTimestamp()
+          last_purchase_variant: variantName,
+          last_purchase_cents: totalCents,
+          last_purchase_time: admin.firestore.FieldValue.serverTimestamp()
         });
       });
 
       await batch.commit();
-      console.log(`✅ SUCCESS: ${amountToAdd} credits added to ${email}`);
+      console.log(`✅ SUCCESS: ${amountToAdd} credits added to ${email} successfully!`);
     }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    // Kho kom pom qhov Error tiag tiag hauv terminal
-    console.error("🔥 Webhook Error:", err.message);
+    console.error("🔥 Webhook Crash:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
