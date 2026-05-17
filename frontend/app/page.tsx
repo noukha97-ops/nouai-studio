@@ -23,9 +23,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [showPayment, setShowPayment] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const router = useRouter();
   const MAX_CHARS = 300;
@@ -72,27 +69,21 @@ export default function Home() {
 
   const generateVoice = async () => {
     const cost = 5 + Math.floor(text.trim().length / 50);
-
     if (!text.trim()) {
       alert("Thov sau ntawv uantej tsim suab!");
       return;
     }
-
-    // ✅ Tshuaj xyuas Credits - Yog tsis txaus ces Pop-up tam sim
     if (credits < cost) {
-      setShowPayment(true);
+      // ✅ KHO: Yog credits tsis txaus, kom nws link mus rau nplooj payment
+      router.push('/payment');
       return;
     }
-
     if (text.length > MAX_CHARS || loading) return;
-    
     setLoading(true);
     setAudioUrl('');
-
     try {
       const { Client } = await import("@gradio/client");
       const app = await Client.connect(RUNPOD_URL);
-      
       const result: any = await app.predict("/tts_generate", {
         gen_text: text,
         ref_audio: null, 
@@ -105,23 +96,19 @@ export default function Home() {
         seed: -1,
         use_ipa: false,
       });
-
       if (result.data && result.data[0]) {
         const generatedAudioUrl = result.data[0].url;
         const audioResponse = await fetch(generatedAudioUrl);
         const audioBlob = await audioResponse.blob();
         const fileName = `hmong_${user!.uid}_${Date.now()}.wav`;
-
         await supabase.storage.from('nouai-audio').upload(fileName, audioBlob);
         const { data: signedData } = await supabase.storage.from('nouai-audio').createSignedUrl(fileName, 31536000);
         const finalUrl = signedData!.signedUrl;
-
         await supabase.from('audio_history').insert([{
           user_id: user!.uid,
           text_content: text,
           audio_url: finalUrl
         }]);
-
         await updateDoc(doc(db, 'users', user!.uid), { credits: increment(-cost) });
         setCredits(prev => prev - cost);
         setAudioUrl(finalUrl);
@@ -153,29 +140,25 @@ export default function Home() {
     }
   };
 
-  const processTopup = (pkg: { cr: number, price: string }) => {
-  if (!user) return;
-  // Peb yuav tsis ntxiv credit tam sim ntawd, tab sis xa mus rau daim payment page uantej
-  const priceValue = pkg.price.replace('$', '');
-  router.push(`/payment?cr=${pkg.cr}&price=${priceValue}`);
-};
-
   if (!mounted || !user) return null;
 
   return (
     <main className="h-screen w-full relative bg-[#0a0514] overflow-hidden flex flex-col">
+      {/* --- BACKGROUND --- */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-[#4a1d70] via-[#2d1b4d] to-[#0a0514]" />
         <div className="absolute inset-0 opacity-25 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2000')] bg-cover bg-center mix-blend-overlay" />
       </div>
 
+      {/* --- NAV BAR --- */}
       <nav className="flex-none z-[100] border-b border-white/10 bg-[#1a0b2e]/60 backdrop-blur-2xl px-6 md:px-10 py-4 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-4">
           <img src={LOGO_PATH} alt="Logo" className="w-10 h-10 rounded-full border border-white/20" />
           <span className="text-[14px] font-black tracking-widest italic text-white uppercase">NouAI Studio</span>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={() => setShowPayment(true)} className="flex items-center gap-3 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-2xl">
+          {/* ✅ KHO: Nias lub balance ces kom nws link mus rau nplooj pricing */}
+          <button onClick={() => router.push('/payment')} className="flex items-center gap-3 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-2xl hover:bg-indigo-500/20 transition-all">
              <span className="text-[10px] font-black text-indigo-300 uppercase">{credits} CR</span>
              <Zap size={12} className="text-indigo-400" />
           </button>
@@ -183,6 +166,7 @@ export default function Home() {
         </div>
       </nav>
 
+      {/* --- MAIN CONTENT --- */}
       <div className="flex-1 overflow-y-auto relative z-10 scrollbar-hide">
         <div className="max-w-[1100px] mx-auto p-4 md:p-10 grid grid-cols-12 gap-8 pb-40">
           <div className="col-span-12 lg:col-span-8 space-y-6">
@@ -195,6 +179,7 @@ export default function Home() {
               </div>
             </header>
 
+            {/* --- EDITOR AREA --- */}
             <div className="relative group p-[2px] rounded-[32px] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.3)] transition-all">
               <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,#6366f1_0%,transparent_25%,transparent_50%,#a855f7_75%,#6366f1_100%)] animate-[spin_6s_linear_infinite]" />
               <div className="relative bg-[#050508] rounded-[30px] p-[2px]">
@@ -216,6 +201,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* --- AUDIO PLAYER --- */}
             {audioUrl && (
               <div className="bg-gradient-to-r from-indigo-600/80 to-purple-700/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex justify-between items-center shadow-xl animate-in zoom-in">
                 <audio controls key={audioUrl} className="flex-1 h-10"><source src={audioUrl} type="audio/mpeg" /></audio>
@@ -223,7 +209,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* --- AUDIO HISTORY --- */}
+            {/* --- HISTORY --- */}
             <div className="mt-12 space-y-4">
               <div className="flex justify-center">
                 <button onClick={() => setIsHistoryExpanded(!isHistoryExpanded)} className="w-full md:w-[400px] flex items-center justify-center gap-4 px-6 py-5 bg-white/5 border border-white/10 rounded-[24px] hover:bg-white/10 transition-all group backdrop-blur-xl">
@@ -234,8 +220,6 @@ export default function Home() {
               </div>
 
               <div className={`space-y-4 transition-all duration-500 overflow-hidden ${isHistoryExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                
-                {/* 🔍 SEARCH BAR - Tshwm tuaj ua ke nrog history */}
                 <div className="flex justify-center px-4">
                   <div className="relative w-full md:w-[400px] group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
@@ -275,41 +259,21 @@ export default function Home() {
             </div>
           </div>
           
+          {/* --- SIDEBAR BALANCE --- */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
             <div className="rounded-[30px] bg-white/5 border border-white/10 p-12 shadow-2xl text-center relative overflow-hidden group hover:bg-white/10 transition-all backdrop-blur-2xl">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-150 transition-all duration-700"><Zap size={80} className="text-indigo-400" /></div>
                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em] mb-8 italic relative z-10">Balance</p>
                <h4 className="text-6xl font-black text-indigo-400 mb-8 italic relative z-10 leading-none tracking-tighter">{credits}</h4>
-               <button onClick={() => setShowPayment(true)} className="relative z-10 w-full py-5 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 flex items-center justify-center gap-2 transition-all hover:bg-indigo-500 hover:text-white">Topup Credits</button>
+               
+               {/* ✅ KHO: Nias lub Topup Credits ces kom nws dhia mus rau nplooj /payment */}
+               <button onClick={() => router.push('/payment')} className="relative z-10 w-full py-5 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 flex items-center justify-center gap-2 transition-all hover:bg-indigo-500 hover:text-white">Topup Credits</button>
             </div>
           </div>
         </div>
       </div>
 
-      {showPayment && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0a0514]/90 backdrop-blur-md" onClick={() => !isProcessing && setShowPayment(false)} />
-          <div className="relative w-full max-w-[420px] bg-zinc-900 border border-white/10 rounded-[40px] p-8 shadow-2xl animate-in zoom-in">
-            {paymentSuccess ? (
-              <div className="py-10 text-center space-y-6"><CheckCircle2 size={60} className="text-green-400 mx-auto shadow-2xl" /><h3 className="text-2xl font-black text-white uppercase italic">Refilled!</h3></div>
-            ) : (
-              <div className="space-y-3">
-                {[
-                  { label: 'Starter', cr: 100, price: '$4.99', popular: false },
-                  { label: 'Pro Creator', cr: 500, price: '$19.99', popular: true },
-                  { label: 'Studio Max', cr: 1500, price: '$49.99', popular: false },
-                ].map((pkg) => (
-                  <button key={pkg.cr} onClick={() => processTopup(pkg)} className={`w-full p-5 rounded-3xl border transition-all flex justify-between items-center ${pkg.popular ? 'border-indigo-500 bg-indigo-500/5 shadow-xl' : 'border-white/5 bg-white/5 hover:border-indigo-500 shadow-md'}`}>
-                    <div className="flex items-center gap-4 text-left"><Zap size={18} className={pkg.popular ? 'text-indigo-400' : 'text-zinc-600'} /><div><p className="text-white font-bold text-sm uppercase">{pkg.cr} CR</p><p className="text-[9px] text-zinc-500 uppercase font-black">{pkg.label}</p></div></div>
-                    <p className="text-white font-black italic">{pkg.price}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-            {isProcessing && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center rounded-[40px] shadow-2xl"><Loader2 className="text-white animate-spin" size={32} /></div>}
-          </div>
-        </div>
-      )}
+      {/* ✅ TSHEM TAWM: Kuv tau muab lub showPayment Modal qub tawm lawm txhawm rau txuag chaw */}
     </main>
   );
 }
