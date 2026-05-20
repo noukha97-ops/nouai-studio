@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
-  LogOut, Zap, Download, Play, X, CheckCircle2, 
+  LogOut, Zap, Download, Play, X, 
   ChevronDown, ChevronUp, Loader2, Clock, Search 
 } from 'lucide-react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
@@ -25,10 +25,14 @@ export default function Home() {
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const router = useRouter();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Khaws lub sijhawm ntsuas inactivity
+
   const MAX_CHARS = 300;
   const RUNPOD_URL = "https://mp3mt4yo331e7d-7860.proxy.runpod.net/"; 
   const LOGO_PATH = "/logo.png"; 
+  const INACTIVITY_LIMIT = 20 * 60 * 1000; // 20 Feeb hloov ua milliseconds (1,200,000 ms)
 
+  // 1. TSHUAB AUTHENTICATION GUARD (TIV THAIV NEW USER)
   useEffect(() => {
     setMounted(true);
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -37,11 +41,57 @@ export default function Home() {
         handleUserSync(currentUser);
         fetchHistory(currentUser.uid);
       } else {
+        // ✅ Yog tsis tau login (New User lossis session tas), ntiab mus rau nlooj login tam sim
+        setUser(null);
         router.push('/login');
       }
     });
     return () => unsubscribe();
   }, [router]);
+
+  // 2. TSHUAB AUTO LOGOUT (INACTIVITY TIMEOUT FOR 20 MINUTES)
+  useEffect(() => {
+    if (!user) return; // Yog tsis tau login tsis thaus khiav lub tshuab ntsuas no
+
+    // Lub tshuab rov pib suav lub sijhawm 20 feeb tshiab
+    const resetTimer = () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      
+      timeoutRef.current = setTimeout(() => {
+        handleAutoLogout();
+      }, INACTIVITY_LIMIT);
+    };
+
+    // Lub tshuab kos npe tawm thaum tsis muaj movment txog 20 feeb
+    const handleAutoLogout = async () => {
+      try {
+        await signOut(auth);
+        alert("Koj lub session tau tas lawm vim koj tsis tau txav mus los li ntawm 20 feeb. Thov login dua tshiab os bro!");
+        router.push('/login');
+      } catch (error) {
+        console.error("Auto logout error:", error);
+      }
+    };
+
+    // Mloog cov xwm txheej (Activities) hauv lub vev xaib
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    
+    // Pib khiav lub tshuab suav lub sijhawm thawj zaug
+    resetTimer();
+
+    // Ntxiv cov kev mloog rau txhua lub event
+    events.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    // Huv si thaum hloov nlooj ntawv (Cleanup)
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      events.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [user, router]);
 
   const handleUserSync = async (currentUser: User) => {
     try {
@@ -74,7 +124,6 @@ export default function Home() {
       return;
     }
     if (credits < cost) {
-      // ✅ KHO: Yog credits tsis txaus, kom nws link mus rau nplooj payment
       router.push('/payment');
       return;
     }
@@ -150,14 +199,13 @@ export default function Home() {
         <div className="absolute inset-0 opacity-25 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2000')] bg-cover bg-center mix-blend-overlay" />
       </div>
 
-      {/* --- NAV BAR --- */}
-      <nav className="flex-none z-[100] border-b border-white/10 bg-[#1a0b2e]/60 backdrop-blur-2xl px-6 md:px-10 py-4 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-4">
+      {/* --- ✅ STICKY NAVBAR (FIXED TOP) --- */}
+      <nav className="h-[72px] sticky top-0 w-full flex-none z-[100] border-b border-white/10 bg-[#1a0b2e]/60 backdrop-blur-2xl px-6 md:px-10 py-4 flex justify-between items-center shadow-lg">
+        <div className="flex items-center gap-4 cursor-pointer" onClick={() => router.push('/')}>
           <img src={LOGO_PATH} alt="Logo" className="w-10 h-10 rounded-full border border-white/20" />
           <span className="text-[14px] font-black tracking-widest italic text-white uppercase">NouAI Studio</span>
         </div>
         <div className="flex items-center gap-4">
-          {/* ✅ KHO: Nias lub balance ces kom nws link mus rau nplooj pricing */}
           <button onClick={() => router.push('/payment')} className="flex items-center gap-3 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-2xl hover:bg-indigo-500/20 transition-all">
              <span className="text-[10px] font-black text-indigo-300 uppercase">{credits} CR</span>
              <Zap size={12} className="text-indigo-400" />
@@ -166,9 +214,10 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* --- MAIN CONTENT --- */}
-      <div className="flex-1 overflow-y-auto relative z-10 scrollbar-hide">
+      {/* --- MAIN CONTENT AREA --- */}
+      <div className="h-[calc(100vh-72px)] overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative z-10">
         <div className="max-w-[1100px] mx-auto p-4 md:p-10 grid grid-cols-12 gap-8 pb-40">
+          
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <header className="flex justify-between items-end px-2 text-left">
               <h2 className="text-[22px] font-bold text-white italic uppercase tracking-tighter">Studio</h2>
@@ -259,21 +308,17 @@ export default function Home() {
             </div>
           </div>
           
-          {/* --- SIDEBAR BALANCE --- */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
             <div className="rounded-[30px] bg-white/5 border border-white/10 p-12 shadow-2xl text-center relative overflow-hidden group hover:bg-white/10 transition-all backdrop-blur-2xl">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-150 transition-all duration-700"><Zap size={80} className="text-indigo-400" /></div>
                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em] mb-8 italic relative z-10">Balance</p>
                <h4 className="text-6xl font-black text-indigo-400 mb-8 italic relative z-10 leading-none tracking-tighter">{credits}</h4>
-               
-               {/* ✅ KHO: Nias lub Topup Credits ces kom nws dhia mus rau nplooj /payment */}
                <button onClick={() => router.push('/payment')} className="relative z-10 w-full py-5 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 flex items-center justify-center gap-2 transition-all hover:bg-indigo-500 hover:text-white">Topup Credits</button>
             </div>
           </div>
+
         </div>
       </div>
-
-      {/* ✅ TSHEM TAWM: Kuv tau muab lub showPayment Modal qub tawm lawm txhawm rau txuag chaw */}
     </main>
   );
 }
