@@ -102,7 +102,6 @@
     --color-black: #000;
     --color-white: #fff;
     --spacing: 0.25rem;
-    --container-md: 28rem;
     --container-2xl: 42rem;
     --container-7xl: 80rem;
     --text-xs: 0.75rem;
@@ -121,8 +120,6 @@
     --text-5xl--line-height: 1;
     --text-6xl: 3.75rem;
     --text-6xl--line-height: 1;
-    --text-8xl: 6rem;
-    --text-8xl--line-height: 1;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
@@ -554,9 +551,6 @@
   .max-w-\[1200px\] {
     max-width: 1200px;
   }
-  .max-w-md {
-    max-width: var(--container-md);
-  }
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
   }
@@ -828,9 +822,6 @@
       background-color: color-mix(in oklab, var(--color-indigo-500) 30%, transparent);
     }
   }
-  .bg-indigo-600 {
-    background-color: var(--color-indigo-600);
-  }
   .bg-indigo-600\/20 {
     background-color: color-mix(in srgb, oklch(51.1% 0.262 276.966) 20%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -936,9 +927,6 @@
   .p-8 {
     padding: calc(var(--spacing) * 8);
   }
-  .p-10 {
-    padding: calc(var(--spacing) * 10);
-  }
   .p-12 {
     padding: calc(var(--spacing) * 12);
   }
@@ -1021,17 +1009,9 @@
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
   }
-  .text-3xl {
-    font-size: var(--text-3xl);
-    line-height: var(--tw-leading, var(--text-3xl--line-height));
-  }
   .text-4xl {
     font-size: var(--text-4xl);
     line-height: var(--tw-leading, var(--text-4xl--line-height));
-  }
-  .text-5xl {
-    font-size: var(--text-5xl);
-    line-height: var(--tw-leading, var(--text-5xl--line-height));
   }
   .text-6xl {
     font-size: var(--text-6xl);
@@ -1735,12 +1715,6 @@
     @media (width >= 48rem) {
       font-size: var(--text-6xl);
       line-height: var(--tw-leading, var(--text-6xl--line-height));
-    }
-  }
-  .md\:text-8xl {
-    @media (width >= 48rem) {
-      font-size: var(--text-8xl);
-      line-height: var(--tw-leading, var(--text-8xl--line-height));
     }
   }
   .md\:text-\[12px\] {
