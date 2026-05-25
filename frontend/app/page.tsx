@@ -25,14 +25,38 @@ export default function Home() {
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const router = useRouter();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Khaws lub sijhawm ntsuas inactivity
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); 
 
   const MAX_CHARS = 300;
   const RUNPOD_URL = "https://mp3mt4yo331e7d-7860.proxy.runpod.net/"; 
   const LOGO_PATH = "/logo.png"; 
-  const INACTIVITY_LIMIT = 20 * 60 * 1000; // 20 Feeb hloov ua milliseconds (1,200,000 ms)
+  const INACTIVITY_LIMIT = 20 * 60 * 1000; 
 
-  // 1. TSHUAB AUTHENTICATION GUARD (TIV THAIV NEW USER)
+  // 🔥 FORCE REMOVE FOOTER BAR GLOBAL LAYOUT
+  useEffect(() => {
+    const removeGlobalFooter = () => {
+      const footerElements = document.getElementsByTagName('footer');
+      for (let i = 0; i < footerElements.length; i++) {
+        (footerElements[i] as HTMLElement).style.setProperty('display', 'none', 'important');
+      }
+      const allElements = document.getElementsByTagName('*');
+      for (let i = 0; i < allElements.length; i++) {
+        const el = allElements[i] as HTMLElement;
+        if (
+          el.textContent?.includes('© 2026 NOUAI STUDIO') || 
+          el.textContent?.includes('ALL RIGHTS RESERVED') ||
+          el.className?.toString().toLowerCase().includes('footer')
+        ) {
+          el.style.setProperty('display', 'none', 'important');
+        }
+      }
+    };
+    removeGlobalFooter();
+    const timer = setInterval(removeGlobalFooter, 500);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 1. TSHUAB AUTHENTICATION GUARD
   useEffect(() => {
     setMounted(true);
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -41,7 +65,6 @@ export default function Home() {
         handleUserSync(currentUser);
         fetchHistory(currentUser.uid);
       } else {
-        // ✅ Yog tsis tau login (New User lossis session tas), ntiab mus rau nlooj login tam sim
         setUser(null);
         router.push('/login');
       }
@@ -49,20 +72,15 @@ export default function Home() {
     return () => unsubscribe();
   }, [router]);
 
-  // 2. TSHUAB AUTO LOGOUT (INACTIVITY TIMEOUT FOR 20 MINUTES)
+  // 2. TSHUAB AUTO LOGOUT
   useEffect(() => {
-    if (!user) return; // Yog tsis tau login tsis thaus khiav lub tshuab ntsuas no
+    if (!user) return; 
 
-    // Lub tshuab rov pib suav lub sijhawm 20 feeb tshiab
     const resetTimer = () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      
-      timeoutRef.current = setTimeout(() => {
-        handleAutoLogout();
-      }, INACTIVITY_LIMIT);
+      timeoutRef.current = setTimeout(() => { handleAutoLogout(); }, INACTIVITY_LIMIT);
     };
 
-    // Lub tshuab kos npe tawm thaum tsis muaj movment txog 20 feeb
     const handleAutoLogout = async () => {
       try {
         await signOut(auth);
@@ -73,23 +91,13 @@ export default function Home() {
       }
     };
 
-    // Mloog cov xwm txheej (Activities) hauv lub vev xaib
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    
-    // Pib khiav lub tshuab suav lub sijhawm thawj zaug
     resetTimer();
+    events.forEach((event) => { window.addEventListener(event, resetTimer); });
 
-    // Ntxiv cov kev mloog rau txhua lub event
-    events.forEach((event) => {
-      window.addEventListener(event, resetTimer);
-    });
-
-    // Huv si thaum hloov nlooj ntawv (Cleanup)
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      events.forEach((event) => {
-        window.removeEventListener(event, resetTimer);
-      });
+      events.forEach((event) => { window.removeEventListener(event, resetTimer); });
     };
   }, [user, router]);
 
@@ -111,10 +119,30 @@ export default function Home() {
         .select('*')
         .eq('user_id', uid)
         .order('created_at', { ascending: false });
-
       if (error) throw error;
       if (data) setHistory(data);
     } catch (e) { console.error(e); }
+  };
+
+  // 📈 HU LUB API RAU SUPABASE XA TRACKING DATA GO!
+  const handleTopUpClickTracking = async () => {
+    try {
+      await fetch('/api/track-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.uid || '',
+          user_email: user?.email || 'unknown',
+          plan_name: 'Clicked Topup Credits Button',
+          price: '0 LAK'
+        })
+      });
+    } catch (error) {
+      console.error("Supabase tracking client trigger error:", error);
+    }
+
+    // 🔥 KHO LUB LINK RAUG MEEJ NKAUS: Mus rau /payment (Tsis muaj tus s li lawm lau os bro!)
+    router.push('/payment');
   };
 
   const generateVoice = async () => {
@@ -124,6 +152,21 @@ export default function Home() {
       return;
     }
     if (credits < cost) {
+      // Auto tracking rau Supabase yog tias credits tas tab sis neeg sim nias tsim suab
+      try {
+        await fetch('/api/track-click', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user?.uid || '',
+            user_email: user?.email || 'unknown',
+            plan_name: 'Auto-Redirect (Out of credits)',
+            price: '0 LAK'
+          })
+        });
+      } catch (e) { console.error(e); }
+
+      // 🔥 KHO LUB LINK RAUG MEEJ NKAUS: Mus rau /payment
       router.push('/payment');
       return;
     }
@@ -199,14 +242,14 @@ export default function Home() {
         <div className="absolute inset-0 opacity-25 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2000')] bg-cover bg-center mix-blend-overlay" />
       </div>
 
-      {/* --- ✅ STICKY NAVBAR (FIXED TOP) --- */}
+      {/* --- HEADER NAV BAR --- */}
       <nav className="h-[72px] sticky top-0 w-full flex-none z-[100] border-b border-white/10 bg-[#1a0b2e]/60 backdrop-blur-2xl px-6 md:px-10 py-4 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-4 cursor-pointer" onClick={() => router.push('/')}>
           <img src={LOGO_PATH} alt="Logo" className="w-10 h-10 rounded-full border border-white/20" />
           <span className="text-[14px] font-black tracking-widest italic text-white uppercase">NouAI Studio</span>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/payment')} className="flex items-center gap-3 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-2xl hover:bg-indigo-500/20 transition-all">
+          <button onClick={handleTopUpClickTracking} className="flex items-center gap-3 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-2xl hover:bg-indigo-500/20 transition-all">
              <span className="text-[10px] font-black text-indigo-300 uppercase">{credits} CR</span>
              <Zap size={12} className="text-indigo-400" />
           </button>
@@ -216,7 +259,7 @@ export default function Home() {
 
       {/* --- MAIN CONTENT AREA --- */}
       <div className="h-[calc(100vh-72px)] overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative z-10">
-        <div className="max-w-[1100px] mx-auto p-4 md:p-10 grid grid-cols-12 gap-8 pb-40">
+        <div className="max-w-[1100px] mx-auto p-4 md:p-10 grid grid-cols-12 gap-8 pb-10">
           
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <header className="flex justify-between items-end px-2 text-left">
@@ -279,11 +322,6 @@ export default function Home() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    {searchQuery && (
-                      <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
-                        <X size={16} />
-                      </button>
-                    )}
                   </div>
                 </div>
 
@@ -308,12 +346,13 @@ export default function Home() {
             </div>
           </div>
           
+          {/* --- BALANCE SIDEBAR --- */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
             <div className="rounded-[30px] bg-white/5 border border-white/10 p-12 shadow-2xl text-center relative overflow-hidden group hover:bg-white/10 transition-all backdrop-blur-2xl">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-150 transition-all duration-700"><Zap size={80} className="text-indigo-400" /></div>
                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em] mb-8 italic relative z-10">Balance</p>
                <h4 className="text-6xl font-black text-indigo-400 mb-8 italic relative z-10 leading-none tracking-tighter">{credits}</h4>
-               <button onClick={() => router.push('/payment')} className="relative z-10 w-full py-5 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 flex items-center justify-center gap-2 transition-all hover:bg-indigo-500 hover:text-white">Topup Credits</button>
+               <button onClick={handleTopUpClickTracking} className="relative z-10 w-full py-5 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 flex items-center justify-center gap-2 transition-all hover:bg-indigo-500 hover:text-white">Topup Credits</button>
             </div>
           </div>
 
