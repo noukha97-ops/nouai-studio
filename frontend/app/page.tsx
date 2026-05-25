@@ -28,7 +28,7 @@ export default function Home() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null); 
 
   const MAX_CHARS = 300;
-  const RUNPOD_URL = "https://mp3mt4yo331e7d-7860.proxy.runpod.net/"; 
+  const RUNPOD_URL = "https://2w28z48o6z351z-7860.proxy.runpod.net/"; 
   const LOGO_PATH = "/logo.png"; 
   const INACTIVITY_LIMIT = 20 * 60 * 1000; 
 
