@@ -2,18 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, X, MessageCircle, Zap } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 export default function PaymentPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<any>(null);
 
   const router = useRouter();
   const LOGO_PATH = '/logo.png';
-  const ADMIN_FB_ID = "916180751581002";
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -34,16 +31,16 @@ export default function PaymentPage() {
     { id: 4, name: 'Studio Pack', credits: 1500, price: '$49.99' },
   ];
 
-  // --- HLOOV LUB HANDLEBUY NO ---
+  // --- KHO LUB HANDLEBUY KOM DIRECT REDIRECT CEEV TSHAJ PLAWS ---
   const handleBuy = async (pkg: any) => {
     if (!user) {
       router.push('/login');
       return;
     }
 
-    // 1. SAVE LOG RAU SUPABASE
+    // 1. SAVE LOG RAU SUPABASE (Khiav tom qab nkaus nkaus)
     try {
-      await fetch('/api/track-click', {
+      fetch('/api/track-click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,10 +54,10 @@ export default function PaymentPage() {
       console.error("Tracking error:", e);
     }
 
-    // 2. SET DATA THIAB QHIB MODAL (Yog koj xav kom nws qhia modal ua ntej)
-    // LOS YOG YOG KOJ XAV KOM NWS QHIB MESSENGER NCJ QHA:
-    const message = `Nyob zoo Admin, kuv xav yuav ${pkg.name} (${pkg.credits} Credits) uas tus nqi yog ${pkg.price}. Thov pab active rau kuv nawb!`;
-    window.open(`https://m.me/${ADMIN_FB_ID}?text=${encodeURIComponent(message)}`, '_blank');
+    // 2. KHAWVB KOOB REDIRECT: Cia li dhia mus rau hauv Messenger tam sim tsis nug li qub
+    // Vim Messenger txwv tsis pub xa ntawv auto, tus user yuav tsum tau ntaus ntawv qhia koj hauv chat
+    // Lossis koj ua video explain qhia lawv tias "Thaum dhia mus txog hauv Messenger, tsuas yog inbox qhia admin tias xav muas lub pack twg"
+    window.location.href = "https://m.me/916180751581002";
   };
 
   return (
