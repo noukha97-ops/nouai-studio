@@ -5,9 +5,19 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// 1. NTXIV KOJ LUB LOGO RAU HAUV METADATA NTAWM NO
 export const metadata: Metadata = {
   title: "NouAI Studio - AI Powered Hmong Voice",
   description: "Convert text to Hmong neural AI voices easily.",
+  icons: {
+    icon: [
+      {
+        url: "/logo.png",
+        href: "/logo.png",
+      },
+    ],
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -17,6 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* 2. NTXIV KHWV KOOB FORCE LOGO RAU HAUV HEAD KOM BROWSER READ CEEV CEEV */}
+        <link rel="icon" href="/logo.png" type="image/png" />
+      </head>
       <body className={`${inter.className} min-h-screen bg-[#0a0514] text-slate-100 flex flex-col justify-between relative overflow-x-hidden`}>
         
         {/* --- GLOBAL CYBERPUNK BACKGROUND THEME FOR EVERY PAGE --- */}
