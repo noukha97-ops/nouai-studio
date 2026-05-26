@@ -6,11 +6,8 @@ def handler(job):
     prompt = job_input.get("prompt", "Nyob zoo")
     
     # --- Koj li F5-TTS logic yuav tsum nyob rau hauv no ---
-    # Piv txwv: result = f5_tts_generate(prompt)
-    result = f"AI tau txais cov lus: {prompt}"
-    
-    return {"result": result}
+    return {"result": f"AI tau txais cov lus: {prompt}"}
 
 # Qhov no yog qhov tseem ceeb tshaj plaws (Entry point)
-# Nws yuav pib khiav lub serverless job handler
+# Nws yuav qhib txoj kev rau RunPod kom xa hauj lwm rau koj
 runpod.serverless.start({"handler": handler})
