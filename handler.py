@@ -1,21 +1,14 @@
 import runpod
-import os
 
-# Nov yog koj lub function uas yuav tsum teb cov job
 def handler(job):
-    job_input = job['input']
+    # Koj tus code AI yuav tsum nyob rau hauv no
+    job_input = job["input"]
+    prompt = job_input.get("prompt", "Nyob zoo")
     
-    # --- KOJ LI AI LOGIC NTAWM NO ---
-    # Piv txwv:
-    # prompt = job_input.get('text', 'Hello')
-    # result = f5tts_model.generate(prompt)
-    # --------------------------------
+    # Piv txwv: koj li F5-TTS logic nyob ntawm no
+    result = f"AI received: {prompt}"
     
-    return {
-        "status": "completed",
-        "message": "AI generated lawm",
-        "result": "Cov ntawv/suab uas koj xav tau"
-    }
+    return {"result": result}
 
-# Pib lub server
+# Qhov no yog qhov tseem ceeb uas yuav ua rau logs tawm!
 runpod.serverless.start({"handler": handler})
