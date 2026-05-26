@@ -1,0 +1,9 @@
+runpod
+transformers==5.8.1
+numpy==1.26.4
+huggingface_hub==1.14.0
+safetensors==0.7.0
+tqdm==4.67.3
+requests==2.32.5
+pyyaml==6.0.3
+pydantic==2.13.4
